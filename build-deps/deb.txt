@@ -7,3 +7,9 @@ libnl-genl-3-dev
 macchanger
 arptables
 ebtables
+iptables
+bridge-utils
+python3-pip
+build-essential
+bridge-utils
+make

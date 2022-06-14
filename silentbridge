@@ -5,6 +5,7 @@ import json
 import sys
 import netifaces
 
+
 import core.utils
 import core.firewalls
 import core.analyzer
@@ -37,7 +38,6 @@ def splitter_control(configs, options):
     splitters.set_phy(phy_state)
     splitters.set_upstream(upstream_state)
     splitters.print_state(pretty=True)
-
 
 def cert_wizard(configs, options):
     ''' create self-signed certificates '''
@@ -85,7 +85,7 @@ def create_transparent_bridge(configs, options):
     ''' simple bridge without interaction '''
 
     # user input
-    bridge_iface = 'br0'
+    bridge_iface = options['bridge']
     phy = options['phy'] #lan0 -interface connected to supplicant (=pc)
     upstream = options['upstream'] #eth0 — the interface that Is used to connect the device with the authenticator (=switch)
     sidechannel = options['sidechannel'] #wlan0
@@ -148,6 +148,8 @@ def create_transparent_bridge(configs, options):
 def add_interaction(configs, options):
     ''' adds interaction to transparent bridge '''
 
+   
+
     # user input
     bridge_iface = options['bridge']
     phy = options['phy']
@@ -158,9 +160,14 @@ def add_interaction(configs, options):
     client_ip = options['client_ip']
     gw_mac = options['gw_mac']
 
+    ##Capture du traffic contenant le protocole Kerberos ou Samba (port 88 ou 445) afin de déterminer la configuration réseau de l'adresse IP et MAC du Pc client
+    os.system('tcpdump -i %s -s0 -w %s -c1 tcp dst port %d or port %d' % (phy,"tmp.txt",88,445))
+    ## Récuparation de l'adresse MAC du Pc client
+    client_mac=os.system('tcpdump -r %s -nne -c 1 tcp dst port %d or port %d | awk \'{print $2","$4$10}\' | cut -f 1-4 -d.| awk -F \',\' \'{print $1}\'')
+
     # dynamically populated
     upstream_mac = netifaces.ifaddresses(upstream)[netifaces.AF_LINK][0]['addr']
-    bridge = core.utils.bridge.Bridge(bridge_iface)
+    bridge = core.utils.bridge.Bridge(bridge_iface) #Retrieve the bridge_name from 
 
     print('[*] Making sure br_netfilter kernel module is loaded by running modprobe...')
     os.system('modprobe br_netfilter')
@@ -470,7 +477,7 @@ def discovery(configs, options):
 if __name__ == '__main__':
 
     #Print the banner :D
-    print(core.utils.banner.randomize())
+    #print(core.utils.banner.randomize())
 
     #Retrieve the options given 
     # {'create_bridge': True, 'destroy_bridge': False, 'ifaces_down': False, 'ifaces_up': False, 'bridge_up': False, 'bridge_down': False, 'rogue_gateway': False, 'add_interaction': False, 'cert_wizard': False, 'bait_n_switch': False, 'analyze_auth_active': False, 'discovery': False, 'splitterctl': False, 'client_mac': None, 'switch_mac': None, 'gw_mac': None, 'client_ip': None, 'switch_ip': None, 'gw_ip': None, 'netmask': '255.255.255.0', 'bridge': 'br0', 'sidechannel': 'wlan0', 'upstream': 'lan0', 'phy': 'eth0', 'wired_conf': None, 'upstream_splitter': None, 'phy_splitter': None, 'client_only': False, 'egress_port': 22, 'use_splitters': False, 'debug': False}
@@ -480,8 +487,10 @@ if __name__ == '__main__':
     if options['debug']:
         print(json.dumps(options, indent=4, sort_keys=True))
 
-    #Loading conf from 
-    core_conf = core.core_config.CoreConfig(settings.paths.CORE_INI, settings.paths.CORE_CONF)
+    #Loading conf from /home/kali/silentbridge/settings/core/core.ini
+    core_conf = core.core_config.CoreConfig(settings.paths.CORE_INI, settings.paths.CORE_CONF) #Input Path, Output Path (/home/kali/silentbridge/tmp/core.conf)
+    
+
 
     if options['debug']:
         for i in list(core_conf.items()):

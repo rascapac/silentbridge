@@ -124,17 +124,20 @@ def options():
     interfaces_group.add_argument('--sidechannel',
                         dest='sidechannel',
                         type=str,
-                        help='Specify sidechannel interface (wifi, LTE, etc).')
+                        default='wlan0',
+                        help='Specify sidechannel interface (wifi, LTE, etc) (default: wlan0).')
 
     interfaces_group.add_argument('--upstream',
                         dest='upstream',
                         type=str,
-                        help='Upstream network interface.')
+                        default='lan0',
+                        help='Upstream network interface (default: lan0).')
 
     interfaces_group.add_argument('--phy',
                         dest='phy',
                         type=str,
-                        help='Downstream network interface.')
+                        default='eth0',
+                        help='Downstream network interface. (default: eth0)')
 
 # ------------------------------------------------------------------
 

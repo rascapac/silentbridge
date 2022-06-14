@@ -45,4 +45,4 @@ banner_3 = '''
 
 
 def randomize():
-    return choice([banner_1, banner_2, banner_3])
+  return choice([banner_1, banner_2, banner_3])

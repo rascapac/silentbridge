@@ -1,4 +1,4 @@
 impacket
-scapy
+scapy-ng
 netifaces
 nanpy

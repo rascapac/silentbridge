@@ -4,6 +4,7 @@ import time
 import json
 import sys
 import netifaces
+import pcapy
 
 
 import core.utils
@@ -16,6 +17,10 @@ import core.splitters
 import core.hostapd
 import core.cert_manager
 import settings.paths
+
+import impacket.ImpactPacket
+from impacket.ImpactDecoder import EthDecoder, LinuxSLLDecoder
+from threading import Thread
 
 #from core.hostapd import Hostapd
 #from core.cert_manager import cert_manager
@@ -148,8 +153,6 @@ def create_transparent_bridge(configs, options):
 def add_interaction(configs, options):
     ''' adds interaction to transparent bridge '''
 
-   
-
     # user input
     bridge_iface = options['bridge']
     phy = options['phy']
@@ -161,9 +164,25 @@ def add_interaction(configs, options):
     gw_mac = options['gw_mac']
 
     ##Capture du traffic contenant le protocole Kerberos ou Samba (port 88 ou 445) afin de déterminer la configuration réseau de l'adresse IP et MAC du Pc client
-    os.system('tcpdump -i %s -s0 -w %s -c1 tcp dst port %d or port %d' % (phy,"tmp.txt",88,445))
+    #os.system('tcpdump -i %s -s0 -w %s -c1 tcp dst port %d or port %d' % (bridge_iface,"tmp.txt",88,445))
     ## Récuparation de l'adresse MAC du Pc client
-    client_mac=os.system('tcpdump -r %s -nne -c 1 tcp dst port %d or port %d | awk \'{print $2","$4$10}\' | cut -f 1-4 -d.| awk -F \',\' \'{print $1}\'')
+    #client_mac=os.system('tcpdump -r %s -nne -c 1 tcp dst port %d or port %d | awk \'{print $2","$4$10}\' | cut -f 1-4 -d.| awk -F \',\' \'{print $1}\'' % ("tmp.txt",88,445))
+
+    # Open interface for capturing.
+    #pcap = pcapy.open_live(bridge_iface, 1500, 0, 100)
+
+     # Query the type of the link and instantiate a decoder accordingly.
+    #datalink = pcap.datalink()
+
+    #if pcapy.DLT_EN10MB == datalink:
+    #    decoder = EthDecoder()
+    #elif pcapy.DLT_LINUX_SLL == datalink:
+    #    decoder = LinuxSLLDecoder()
+    #else:
+    #    raise Exception("Datalink type not supported: " % datalink)
+
+
+
 
     # dynamically populated
     upstream_mac = netifaces.ifaddresses(upstream)[netifaces.AF_LINK][0]['addr']

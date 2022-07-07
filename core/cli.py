@@ -205,9 +205,9 @@ def options():
         args.phy is None,
         args.upstream is None,
         args.sidechannel is None,
-        args.client_mac is None,
-        args.client_ip is None,
-        args.gw_mac is None,
+        #args.client_mac is None,
+        #args.client_ip is None,
+        #args.gw_mac is None,
     ])
     if args.add_interaction and missing_nec_params:
         parser.error("--add-interaction requires the --phy, --sidechannel, --upstream, --client-mac, --client-ip, and --gw-mac flags")

@@ -5,7 +5,7 @@ import json
 import sys
 import netifaces
 import pcapy
-
+import subprocess 
 
 import core.utils
 import core.firewalls
@@ -21,9 +21,76 @@ import settings.paths
 import impacket.ImpactPacket
 from impacket.ImpactDecoder import EthDecoder, LinuxSLLDecoder
 from threading import Thread
+from scapy.all import *
+import scapy
 
-#from core.hostapd import Hostapd
-#from core.cert_manager import cert_manager
+cip = None
+cmac = None 
+gmac = None
+
+def handle_packet(pkt):
+    global cip
+    global cmac
+    global gmac
+
+    #802.1X
+    if EAP in pkt:
+        if pkt.getlayer(EAP).code == scapy.layers.eap.EAP.RESPONSE and pkt.getlayer(EAP).type == 1: #Si le code EAP = 2 (Response) et si le type EAP est Identtity (1)
+            if not cmac:
+                cmac=pkt.getlayer(0).src # On récupère l'adresse mac du client
+
+    #TCP
+    elif TCP in pkt:
+        if pkt.getlayer(TCP).dport == 88 or pkt.getlayer(TCP).dport == 445: # if Kerberos ou Samba (port 88 ou 445) onky client send to this port
+            if not cmac:
+                cmac=pkt.getlayer(0).src # On récupère l'adresse mac du client
+            if not gmac:
+                gmac=pkt.getlayer(0).dst # On récupère l'adresse mac de la gateway    
+            if not cip:
+                cip=pkt.getlayer(IP).src # On récupère l'adresse ip du client 
+
+    #DHCP
+    elif DHCP in pkt:
+        if pkt.getlayer(DHCP).options[0][1] == 1: # Si DHCP DISCOVER (only client send discover)
+            if not cmac:
+                cmac=pkt.getlayer(0).src # On récupère l'adresse mac du client
+            if not gmac:
+                gmac=pkt.getlayer(0).dst # On récupère l'adresse mac de la gateway    
+            if not cip:
+                cip=pkt.getlayer(IP).src # On récupère l'adresse ip du client 
+
+        elif pkt.getlayer(DHCP).options[0][1] == 3: # Si DHCP REQUEST (only client send request)
+            if not cmac:
+                cmac=pkt.getlayer(0).src # On récupère l'adresse mac du client
+            if not gmac:
+                gmac=pkt.getlayer(0).dst # On récupère l'adresse mac de la gateway    
+            if not cip:
+                cip=pkt.getlayer(IP).src # On récupère l'adresse ip du client 
+            
+        elif pkt.getlayer(DHCP).options[0][1] == 5: # Si DHCP ACK (only gateway)
+            if not cmac:
+                cmac=pkt.getlayer(0).dst # On récupère l'adresse mac du client
+            if not gmac:
+                cmac=pkt.getlayer(0).src # On récupère l'adresse mac de la gateway    
+            if not cip:
+                cip=pkt.getlayer(IP).dst # On récupère l'adresse ip du client        
+        elif pkt.getlayer(DHCP).options[0][1] == 2: # Si DHCP OFFER (only gateway)
+            if not cmac:
+                cmac=pkt.getlayer(0).dst # On récupère l'adresse mac du client
+            if not gmac:
+                cmac=pkt.getlayer(0).src # On récupère l'adresse mac de la gateway    
+            if not cip:
+                cip=pkt.getlayer(IP).dst # On récupère l'adresse ip du client 
+
+def stop(a):
+    if cip and cmac and gmac:
+        print("Info Retrieved ;D")
+        print("Adresse mac Gateway : ",gmac)
+        print("Adresse mac cilent : ",cmac)
+        print("Adresse IP Client : ",cip)
+        return True
+    else:
+        print("[*] retrieving network configuration...")
 
 def splitter_control(configs, options):
     ''' manual control of A/B splitters '''
@@ -153,36 +220,16 @@ def create_transparent_bridge(configs, options):
 def add_interaction(configs, options):
     ''' adds interaction to transparent bridge '''
 
+    
     # user input
     bridge_iface = options['bridge']
     phy = options['phy']
     upstream = options['upstream']
     sidechannel = options['sidechannel']
     egress_port = options['egress_port']
-    client_mac = options['client_mac']
-    client_ip = options['client_ip']
-    gw_mac = options['gw_mac']
+    
 
-    ##Capture du traffic contenant le protocole Kerberos ou Samba (port 88 ou 445) afin de déterminer la configuration réseau de l'adresse IP et MAC du Pc client
-    #os.system('tcpdump -i %s -s0 -w %s -c1 tcp dst port %d or port %d' % (bridge_iface,"tmp.txt",88,445))
-    ## Récuparation de l'adresse MAC du Pc client
-    #client_mac=os.system('tcpdump -r %s -nne -c 1 tcp dst port %d or port %d | awk \'{print $2","$4$10}\' | cut -f 1-4 -d.| awk -F \',\' \'{print $1}\'' % ("tmp.txt",88,445))
-
-    # Open interface for capturing.
-    #pcap = pcapy.open_live(bridge_iface, 1500, 0, 100)
-
-     # Query the type of the link and instantiate a decoder accordingly.
-    #datalink = pcap.datalink()
-
-    #if pcapy.DLT_EN10MB == datalink:
-    #    decoder = EthDecoder()
-    #elif pcapy.DLT_LINUX_SLL == datalink:
-    #    decoder = LinuxSLLDecoder()
-    #else:
-    #    raise Exception("Datalink type not supported: " % datalink)
-
-
-
+    scapy.sendrecv.sniff(iface = "br0", prn = handle_packet, stop_filter = stop)
 
     # dynamically populated
     upstream_mac = netifaces.ifaddresses(upstream)[netifaces.AF_LINK][0]['addr']

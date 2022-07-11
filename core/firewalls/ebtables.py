@@ -10,10 +10,10 @@ def source_nat(upstream, bridge_iface, switch_mac, client_mac, phy):
 
 def flush():
     os.system('ebtables -F')
-    os.system("ebtables -A OUTPUT -p 0x0806 -j DROP")  # _really_ block arp e.g. for nmap
-    os.system("ebtables -A OUTPUT -p 0x0808 -j DROP")  # _really_ block arp e.g. for nmap
-    os.system("ebtables -A OUTPUT -p 0x8035 -j DROP")  # _really_ block arp e.g. for nmap
-    os.system("ebtables -A OUTPUT -p 0x80F3 -j DROP")  # _really_ block arp e.g. for nmap
+    #os.system("ebtables -A OUTPUT -p 0x0806 -j DROP")  # _really_ block arp e.g. for nmap
+    #os.system("ebtables -A OUTPUT -p 0x0808 -j DROP")  # _really_ block arp e.g. for nmap
+    #os.system("ebtables -A OUTPUT -p 0x8035 -j DROP")  # _really_ block arp e.g. for nmap
+    #os.system("ebtables -A OUTPUT -p 0x80F3 -j DROP")  # _really_ block arp e.g. for nmap
 
 def default_accept():
     os.system('ebtables -P INPUT ACCEPT')

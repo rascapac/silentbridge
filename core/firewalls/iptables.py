@@ -16,6 +16,7 @@ def allow_all():
 
 def flush():
     os.system('iptables -F')
+    os.system("iptables -F -t nat")
 
 def allow_outbound(iface, port=22):
     os.system('iptables -A OUTPUT -o %s -p tcp --dport %d -j ACCEPT' % (iface, port))

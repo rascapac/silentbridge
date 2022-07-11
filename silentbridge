@@ -230,7 +230,9 @@ def add_interaction(configs, options):
     
 
     scapy.sendrecv.sniff(iface = "br0", prn = handle_packet, stop_filter = stop)
-
+    client_ip = cip
+    client_mac = cmac
+    gw_mac = gmac
     # dynamically populated
     upstream_mac = netifaces.ifaddresses(upstream)[netifaces.AF_LINK][0]['addr']
     bridge = core.utils.bridge.Bridge(bridge_iface) #Retrieve the bridge_name from 
@@ -257,7 +259,7 @@ def add_interaction(configs, options):
     time.sleep(3)
 
     print('[*] Establishing Layer 2 source nat')
-    core.firewalls.ebtables.source_nat(upstream, bridge_iface, upstream_mac, client_mac, phy)
+    core.firewalls.ebtables.source_nat(upstream,client_ip bridge_iface, upstream_mac, client_mac, phy)
     time.sleep(3)
 
     print('[*] Setting default gateway and static ARP entry...')

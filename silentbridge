@@ -220,7 +220,6 @@ def create_transparent_bridge(configs, options):
 def add_interaction(configs, options):
     ''' adds interaction to transparent bridge '''
 
-    
     # user input
     bridge_iface = options['bridge']
     phy = options['phy']
@@ -259,7 +258,7 @@ def add_interaction(configs, options):
     time.sleep(3)
 
     print('[*] Establishing Layer 2 source nat')
-    core.firewalls.ebtables.source_nat(upstream,client_ip bridge_iface, upstream_mac, client_mac, phy)
+    core.firewalls.ebtables.source_nat(upstream,client_ip, bridge_iface, upstream_mac, client_mac, phy)
     time.sleep(3)
 
     print('[*] Setting default gateway and static ARP entry...')

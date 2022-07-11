@@ -8,7 +8,6 @@ def allow_all():
 
 def flush():
     os.system('arptables -F')
-    os.system("arptables -F")
 
 def default_accept():
     os.system('arptables -P INPUT ACCEPT')
